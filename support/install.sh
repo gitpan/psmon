@@ -1,8 +1,8 @@
 #!/bin/sh
 ############################################################
-# $Id: install.sh,v 1.6 2004/08/01 10:44:13 nicolaw Exp $
+# $Id: install.sh,v 1.7 2004/10/12 10:47:47 nicolaw Exp $
 # install.sh - Installation script for psmon
-# Copyright: (c)2002,2003 Nic Lawrence. All rights reserved.
+# Copyright: (c)2002,2003 Nicola Worthington. All rights reserved.
 ############################################################
 # This file is part of psmon.
 #
