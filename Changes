@@ -1,0 +1,415 @@
+2003-03-26 14:17  nicolaw
+
+	* psmon (1.58), psmon.html (1.4): First commit to try and get
+	cmndline =~ regex checking based process scope rules. This is
+	currently only working to respawn dead process, and does not yet
+	know how to describe what it is restarting when logging and
+	notifying.
+
+2003-03-26 09:22  nicolaw
+
+	* README (1.2), psmon.1 (1.2), psmon.html (1.3): Updated docs
+
+2003-03-25 14:22  tag rel-1-0-4
+
+2003-03-25 14:22  nicolaw
+
+	* psmon.conf (1.17, rel-1-0-4): Updated default config to include
+	some more daemons and additional help.
+
+2003-03-25 13:32  nicolaw
+
+	* psmon (1.57, rel-1-0-4): Small fixes
+
+2003-03-25 11:01  nicolaw
+
+	* psmon (1.56): Removed an old DEBUG line
+
+2003-03-25 11:00  nicolaw
+
+	* psmon (1.55): Mar 24 17:53:21 nicolaw psmon[11657]: Removing stale
+	PID file.  Mar 24 17:53:21 nicolaw psmon[11657]: Forking background
+	daemon, process 11658.	Mar 24 17:53:21 nicolaw psmon[11658]: Forking
+	second background daemon, process 11659.  Mar 24 17:53:21 nicolaw
+	psmon[11659]: Terminating.
+	
+	This bug was reported by Jordan Lederman <jlederma@advance.net> on
+	Mon 24 Mar 2003.  Daemon spawned psmon instances seem to die
+	immediatelty after forking for the second time. The while PID file
+	exists loop was checking against the old $O{pidfile} variable
+	container which is now moved to a locally scoped lexical withing
+	the main look and daemonize function.
+
+2003-03-24 18:00  nicolaw
+
+	* psmon (1.54), psmon.html (1.2, rel-1-0-4): Interim commit to fix
+	a --daemon spawn bug
+
+2003-03-20 16:21  tag rel-1-0-3
+
+2003-03-20 16:21  nicolaw
+
+	* README (1.1, rel-1-0-4), psmon.1 (1.1, rel-1-0-4), psmon.html
+	(1.1) (utags: rel-1-0-3): Updating refreshed documentation
+
+2003-03-20 16:14  nicolaw
+
+	* psmon (1.53, rel-1-0-3): Added the KillCmd directive to kill
+	processes using a user defined command insted of or in addition to
+	just sending a regular SIGKILL signal to the process.
+	
+	Moved the printing of sysvinit style statuses to a seperate
+	subroutine which decides what to print and when to surpress output.
+	
+	Changed the way that dryruns are detected at spawn and kill time so
+	that only one set of log and status messages have to be maintained.
+
+2003-03-20 13:37  nicolaw
+
+	* psmon (1.52): Added the NeverKillPID and NeverKillProcessName
+	directives.
+
+2003-03-20 12:56  nicolaw
+
+	* psmon (1.51): Got rid of the following global variables in to the
+	%O hash:    $PIDFILE, $DEFAULT_CONFIG_FILE, $CONFIG_FILE, $DAEMON, 
+	$CRON, $DRYRUN, $USER, $ADMINEMAIL
+
+2003-03-19 17:22  tag rel-1-0-2
+
+2003-03-19 17:22  nicolaw
+
+	* psmon (1.50, rel-1-0-2): Fixed major bug whereby the --user
+	option code somehow appeared to be complete rubbish, and therefore
+	would have either always scanned all or none of the process table
+	instead of just those processes owned by the specified user. This
+	is now fixed and will be tested shortly.
+	
+	Moved the killing and spawning actions out in to two seperate
+	subroutines that are called by the main check_processtable()
+	routine.  This makes the code slightly easier to read, and will
+	make adding the new killcmd and related commands slightly easier to
+	insert.
+	
+	Added validation for the lastsafepid configuration directive to
+	ensure it's value is always numeric.
+	
+	Changed the loglevel of reporting of saving protected PIDs from
+	death from INFO to whatever the defined loglevel for that process
+	is. If there is none defined then the default loglevel will be
+	applied.
+
+2003-03-17 15:06  tag rel-1-0-1
+
+2003-03-17 15:06  nicolaw
+
+	* psmon (1.49, rel-1-0-1): I completely missed the fix meant for
+	the last commit!
+
+2003-03-17 13:44  nicolaw
+
+	* psmon (1.48): Added isnumeric() function to cope with potentially
+	non-numeric output from config and process table scan when numeric
+	is expected. In response to bug reported by Andy Brown
+	<andybrown21@hotmail.com>
+
+2003-03-14 14:25  nicolaw
+
+	* commit.sh (1.4, rel-1-0-4, rel-1-0-3, rel-1-0-2, rel-1-0-1):
+	Added README and updated commit.sh to automatically regenerate it.
+
+2003-03-14 12:28  nicolaw
+
+	* COPYING (1.1, rel-1-0-4, rel-1-0-3, rel-1-0-2, rel-1-0-1),
+	commit.sh (1.3), install.sh (1.6, rel-1-0-4, rel-1-0-3, rel-1-0-2,
+	rel-1-0-1), perldoc.css (1.2, rel-1-0-4, rel-1-0-3, rel-1-0-2,
+	rel-1-0-1), psmon (1.47), psmon.conf (1.16, rel-1-0-3, rel-1-0-2,
+	rel-1-0-1): Added GPL license details to the header of all relevant
+	files, and added http://www.gnu.org/licenses/gpl.txt to the file
+	COPYING in order to be compliant with GPL practices.
+
+2003-03-13 11:53  nicolaw
+
+	* install.sh (1.5): Updated man page installation
+
+2003-03-12 12:13  tag rel-1-0-0
+
+2003-03-12 12:13  nicolaw
+
+	* commit.sh (1.2, rel-1-0-0): Minor change for my benefit again
+
+2003-03-12 12:08  nicolaw
+
+	* commit.sh (1.1): Adding commit.sh for my own ease of development
+	purposes
+
+2003-03-07 15:12  nicolaw
+
+	* install.sh (1.4), perldoc.css (1.1) (utags: rel-1-0-0): Added
+	.css for psmon.html docs properly
+
+2003-03-07 14:55  nicolaw
+
+	* psmon (1.46, rel-1-0-0): Updated documentation
+
+2003-03-07 00:08  nicolaw
+
+	* psmon (1.45): Smalled fixes in parts of POD documentation and
+	supporting versions
+
+2003-03-06 18:01  nicolaw
+
+	* psmon (1.44): Updated POD documentation.
+
+2003-03-04 17:44  nicolaw
+
+	* psmon (1.43): Added scalar to instances clause - might be broken
+	otherwise, maybe?
+
+2003-03-04 16:32  nicolaw
+
+	* psmon (1.41): Updated sendmail() I think
+
+2003-03-03 14:12  nicolaw
+
+	* psmon (1.40): Changed the syslog code so that the inital testing
+	and daemonizing uses syslog with PERROR so that erorrs get logged
+	to the connected terminal too. Once it's been daemonized or started
+	to do an actual process check, it reopens the syslog connection
+	without PERROR so that log entries only end up in syslog.
+
+2003-02-28 17:53  nicolaw
+
+	* psmon (1.39), psmon.conf (1.15, rel-1-0-0): LOG_CRIT or worse
+	errors no longer cause a die from log().  All orrurances of
+	LOG_CRIT logging which relied on this fucntionality have been
+	changed to manually force an exit with a unit exit return value.
+
+2003-02-28 17:18  nicolaw
+
+	* psmon (1.38): Added support to change the syslog facility logged
+	to, and set different loglevels for different kill and spawn
+	actions.
+
+2003-02-27 16:28  nicolaw
+
+	* psmon (1.37): Fixed some missing "unless $DAEMON" items
+
+2003-02-27 16:13  nicolaw
+
+	* psmon (1.36): Made changes to bring in to line with new features
+	of newapp_template.  Includes double forking to detach from
+	interactive tty's properly.
+
+2003-02-12 18:47  nicolaw
+
+	* psmon (1.35): Serious fek up with pctmem and pctcpu values passed
+	in to sprintf was the problem - fixed
+
+2003-02-12 18:44  nicolaw
+
+	* psmon (1.34): Changes %.2f to %s for the moment - much
+	strangeness when tested on mdk
+
+2003-02-12 18:40  nicolaw
+
+	* psmon (1.33): Fixed some formatting and $slay hash reference
+	syntax errors
+
+2003-02-12 18:27  nicolaw
+
+	* psmon (1.32): I think I have fixed the safe PIDFile code which
+	protects named parent processes. The code was accidentally only
+	implemeneted for one slaying critera (oops). This needs to be
+	tested though.
+	
+	Also added support for additional description of why each process
+	was actually slayed,.. including some figures.
+
+2003-02-12 15:49  nicolaw
+
+	* psmon (1.31): Now uses $PIDFILE to support config file
+	indepentant PID files to allow many psmon instances using different
+	configs to run as daemons
+
+2003-02-12 15:08  nicolaw
+
+	* psmon (1.30): $PIDFILE is added - need to change the code to use
+	the variable
+
+2003-02-11 15:58  nicolaw
+
+	* psmon (1.29): Exporting POSIX stuff explicitly
+
+2003-02-07 15:40  nicolaw
+
+	* psmon (1.28): Fixed handling of process scope * so that it now
+	works properly
+
+2003-02-07 14:49  nicolaw
+
+	* psmon (1.27), psmon.conf (1.14): Added the DryRun directive to
+	force the dryrun mode to be applied to specific config files no
+	matter what. Added a little more documentation, and lots of
+	comments to the config file
+
+2003-02-05 17:24  nicolaw
+
+	* psmon (1.26): Fixed a =over4 pod tag to be =over 4
+
+2003-01-30 14:02  nicolaw
+
+	* psmon (1.24): Added comment to what syslog facility in the log
+	docs
+
+2003-01-30 13:59  nicolaw
+
+	* install.sh (1.3), psmon (1.23): Updated docs, getting ahead of
+	myself with planned features/fixes/improvements. :)
+
+2003-01-30 10:58  nicolaw
+
+	* psmon (1.22), psmon.conf (1.13): Added email override
+	functionality
+
+2003-01-28 10:47  nicolaw
+
+	* psmon (1.21): Removed Sys::Load from dependencies since it's not
+	currently being used anywhere in the code! :-)
+
+2003-01-28 10:47  nicolaw
+
+	* install.sh (1.2): Removed Sys::Load from dependencies since it's
+	not currently being used anywhere in the code! :-)
+
+2003-01-26 22:20  nicolaw
+
+	* psmon (1.20): Yet more typos.
+
+2003-01-26 22:19  nicolaw
+
+	* psmon (1.19): Added a couple of lines of docs for the install
+
+2003-01-26 22:12  nicolaw
+
+	* psmon (1.18): Removed 2 debug lines which weren't taken out
+
+2003-01-26 22:10  nicolaw
+
+	* psmon (1.17): Added support for pctmem directive. Any process
+	using in excess of X percent of total system memory will be killed.
+
+2003-01-26 22:03  nicolaw
+
+	* psmon (1.16): Reformatted subroutine pod docs
+
+2003-01-26 21:54  nicolaw
+
+	* psmon.conf (1.12): Added lastsafepid functionality so save any
+	processes less than or equal to lastsafepid from death
+
+2003-01-26 21:54  nicolaw
+
+	* psmon (1.15): Added lastsafepid functionality so save any
+	processes less than or equal to lastsafepid from death
+
+2003-01-26 21:17  nicolaw
+
+	* psmon.conf (1.11): Expanded default psmon.conf, and added
+	LastSafePID option to protect all PIDs from 1 to X. Functionality
+	being added to psmon for this now.
+
+2003-01-26 21:07  nicolaw
+
+	* libnet-1.12.tar.gz (1.1, rel-1-0-4, rel-1-0-3, rel-1-0-2,
+	rel-1-0-1, rel-1-0-0): Added libnet for Net::SMTP module
+	dependancy.
+
+2003-01-25 15:45  nicolaw
+
+	* psmon.conf (1.9): Changed the default distribution psmon.conf a
+	little to be a little more sensible
+
+2003-01-25 15:41  nicolaw
+
+	* Config-General-2.15.tar.gz (1.1, rel-1-0-4, rel-1-0-3, rel-1-0-2,
+	rel-1-0-1, rel-1-0-0), Getopt-Long-2.32.tar.gz (1.1, rel-1-0-4,
+	rel-1-0-3, rel-1-0-2, rel-1-0-1, rel-1-0-0),
+	Proc-ProcessTable-0.38.tar.gz (1.1, rel-1-0-4, rel-1-0-3,
+	rel-1-0-2, rel-1-0-1, rel-1-0-0), Sys-Load-0.2.tar.gz (1.1,
+	rel-1-0-4, rel-1-0-3, rel-1-0-2, rel-1-0-1, rel-1-0-0),
+	Unix-Syslog-0.99.tar.gz (1.1, rel-1-0-4, rel-1-0-3, rel-1-0-2,
+	rel-1-0-1, rel-1-0-0), install.sh (1.1), psmon (1.14): Removed old
+	redundant ChangeLog file. Added shell script install.sh
+	installation wrapper, which will attempt to install any missing
+	perl modules, move old psmon versions out of the way and symlink
+	appropriately, install man pages etc etc
+
+2003-01-24 18:31  nicolaw
+
+	* psmon (1.13): Added the --dryrun command line option, so that
+	actual killing and spawning of processes can be disabled, but all
+	the other motions and alerts will happen. This is useful for
+	testing a new config file before using it in a live environment.
+
+2003-01-24 18:21  nicolaw
+
+	* psmon (1.12): Fixed =head2 pod syntax error
+
+2003-01-24 18:18  nicolaw
+
+	* psmon (1.11): Added some more docs
+
+2003-01-24 18:06  nicolaw
+
+	* psmon (1.10), psmon.conf (1.8): Added small docs for the pctcpu
+	config scope directive
+
+2003-01-24 17:58  nicolaw
+
+	* psmon (1.9), psmon.conf (1.7): Added more documentation
+
+2003-01-24 17:45  nicolaw
+
+	* psmon (1.8), psmon.conf (1.6): Fixed lots of variable references
+	to they they will now run with warnings enabled under Perl 5.8.x.
+	Also catches smtp failures and logs as such to syslog.
+
+2003-01-24 16:57  nicolaw
+
+	* psmon (1.7): Typo of $revision instead of $1 in display_version()
+
+2003-01-24 16:56  nicolaw
+
+	* psmon (1.6): Split sparse first line version information and then
+	detailed second line version information, plus author, copyright
+	and GPL license notice.
+
+2003-01-24 16:47  nicolaw
+
+	* psmon (1.5): Added --version command line option to print full
+	version information
+
+2003-01-23 17:00  nicolaw
+
+	* psmon (1.4): next part major update
+
+2003-01-13 11:20  nicolaw
+
+	* psmon.conf (1.2): changed notification email address
+
+2003-01-06 12:23  nicolaw
+
+	* psmon (1.2): Added POD documentation
+
+2002-11-23 16:24  tag start
+
+2002-11-23 16:24  nicolaw
+
+	* psmon (1.1), psmon.conf (1.1): Initial revision
+
+2002-11-23 16:24  nicolaw
+
+	* psmon (1.1.1.1), psmon.conf (1.1.1.1) (utags: start): Imported
+	sources for module psmon
+

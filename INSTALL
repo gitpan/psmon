@@ -1,0 +1,6 @@
+$ tar -zxvf psmon-1.nn.tar.gz
+$ cd psmon-1.nn
+$ su
+Password:
+$ support/install.sh
+$ vi /etc/psmon.conf
