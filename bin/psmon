@@ -1,8 +1,8 @@
 #!/usr/bin/perl -w
 ############################################################
-# $Id: psmon,v 1.10 2004/10/12 12:55:59 nicolaw Exp $
+# $Id: psmon,v 1.14 2005/03/02 12:34:23 nicolaw Exp $
 # psmon - Process Table Monitor Script
-# Copyright: (c)2002,2003,2004 Nicola Worthington. All rights reserved.
+# Copyright: (c)2002,2003,2004,2005 Nicola Worthington. All rights reserved.
 ############################################################
 # This file is part of psmon.
 #
@@ -29,7 +29,7 @@ psmon - Process Table Monitoring Script
 
 =head1 VERSION
 
-$Id: psmon,v 1.10 2004/10/12 12:55:59 nicolaw Exp $
+$Id: psmon,v 1.14 2005/03/02 12:34:23 nicolaw Exp $
 
 =head1 SYNOPSIS
 
@@ -72,7 +72,7 @@ will respawn or kill processes based on a set of rules defined in an
 Apache style configuration file.
 
 Processes will be respawned if a spawn command is defined for a process,
-and no occurances of that process are running. If the --user command line
+and no occurrences of that process are running. If the --user command line
 option is specified, then the process will only be spawned if no instances
 are running as the specified userid.
 
@@ -152,7 +152,7 @@ For the lazy people reading this, you can try the
 following command to install these modules:
 
     for m in Getopt::Long Config::General POSIX Proc::ProcessTable \
-	 Net::SMTP Unix::Syslog;do perl -MCPAN -e"install $m";done
+      Net::SMTP Unix::Syslog;do perl -MCPAN -e"install $m";done
 
 Alternatively you can run the install.sh script which comes in the
 distribution tarball. It will attempt to install the right modules,
@@ -161,7 +161,7 @@ documentation.
 
 By default psmon will look for its runtime configuration in /etc/psmon.conf,
 although this can be defined as otherwise from the command line. For system
-wide installations it is reccomended that you install your psmon in to the
+wide installations it is recommended that you install your psmon in to the
 default location.
 
 =cut
@@ -181,20 +181,19 @@ use Proc::ProcessTable ();
 use File::Basename qw(dirname);
 
 # Define constants
-use constant DEBUG      => 0;  # This should be reset back to 0 for public releases
-use constant PREFIX	=> ''; # You may want to set this to /home/joeb or something
-use constant HOSTNAME   => (POSIX::uname())[1];
+use constant DEBUG		=> 0;  # This should be reset back to 0 for public releases
+use constant PREFIX		=> ''; # You may want to set this to /home/joeb or something
+use constant HOSTNAME	=> (POSIX::uname())[1];
 
 # Declare global package variables
 use subs qw(report loglevel logfacility log alert);
 use vars qw($VERSION $SELF %O %C); # I want to move %O, and %C out of global space
 
 # These English variables and globals are okay to stay
-$WARNING		= 1;
+$WARNING			= 1;
 $OUTPUT_AUTOFLUSH	= 1;
-$ENV{PATH}		= '/bin:/usr/bin:/usr/local/bin';
 ($SELF = $PROGRAM_NAME)	=~ s|^.*/||;
-$VERSION = sprintf('%d.%02d', q$Revision: 1.10 $ =~ /(\d+)/g);
+$VERSION = sprintf('%d.%02d', q$Revision: 1.14 $ =~ /(\d+)/g);
 
 # Get command line options
 %O = ( default_conf => PREFIX.'/etc/psmon.conf' );
@@ -221,7 +220,12 @@ $O{conf} = get_config_to_read_from($O{conf});
 =head1 CONFIGURATION
 
 The default configuration file location is /etc/psmon.conf. A different
-configuration file can be declared from the command line.
+configuration file can be declared from the command line. You will find
+an example configuration file supplied in the etc/ directory of the
+distribution tarball. It is recommended that you use this as a guide to
+writing your own configuration file by hand. Alternatively you can use
+the B<psmon-config> script which will interactively create a configuration
+for you.
 
 Syntax of the configuration file is based upon that which is used by
 Apache. Each process to be monitored is declared with a Process scope
@@ -237,7 +241,7 @@ directive like this example which monitors the OpenSSH daemon:
 There is a special I<*> process scope which applies to I<all> running
 processes. This special scope should be used with extreme care. It does
 not support the use of the I<spawncmd>, I<pidfile>, I<instances> or I<ttl>
-directivers. A typical example of this scope might be as follows:
+directives. A typical example of this scope might be as follows:
 
     <Process *>
         pctcpu    95
@@ -307,7 +311,7 @@ less than or equal to 1. Defaults to 100.
 
 =item ProtectSafePIDsQuietly
 
-Accepts a boolean value of On or Off. Surpresses all notifications of
+Accepts a boolean value of On or Off. Suppresses all notifications of
 preserved process IDs when used in conjunction with the I<lastsafepid>
 directive. Defaults to Off.
 
@@ -336,8 +340,18 @@ report and never actually take any automated action.
 =item NotifyDetail
 
 Defines the verbosity of notification emails which are sent. Can be set
-to 'Simple', 'Verbose' or 'Debug'. Defaults to 'Verbose'. This function
-will be removed soon. It is unnecessary bloat and is not very portable.
+to 'Simple', 'Verbose' or 'Debug'. Defaults to 'Verbose'. This directive
+is depreciated.
+
+=item NeverKillPID
+
+Accepts a space delimited list of PIDs which will never be killed.
+Defaults to 1.
+
+=item NeverKillProcessName
+
+Accepts a space delimited list of process names which will never be
+killed. Defaults to 'kswapd kupdated mdrecoveryd pageout sched init'.
 
 =back
 
@@ -355,7 +369,7 @@ process.
 Defines the full command line to be executed in order to gracefully
 shutdown or kill a rogue process. If the command returns a boolean true
 exit status then it is assumed that the command failed to execute
-sucessfully. If no KillCmd is specified or the command fails, the
+successfully. If no KillCmd is specified or the command fails, the
 process will be killed by sending a SIGKILL signal with the standard
 kill() function. Undefined by default.
 
@@ -385,7 +399,7 @@ threshold and it's process ID isn't contained in the defined pidfile.
 =item Instances
 
 Defines a maximum number of instances of a process which may run. The
-process will be killed once there are more than this number of occurances
+process will be killed once there are more than this number of occurrences
 running, and it's process ID isn't contained in the defined pid file.
 
 =item NoEmailOnKill
@@ -403,16 +417,6 @@ notification emails for this process scope. Defaults to False.
 Accepts a boolean value of True or False. Surpresses all notification
 emails for this process scope. Defaults to False.
 
-=item NeverKillPID
-
-Accepts a space delimited list of PIDs which will never be killed.
-Defaults to 1.
-
-=item NeverKillProcessName
-
-Accepts a space deliomited list of process names which will never be
-killed. Defaults to 'kswapd kupdated mdrecoveryd'.
-
 =back
 
 =head2 EXAMPLES
@@ -426,7 +430,7 @@ killed. Defaults to 'kswapd kupdated mdrecoveryd'.
     </Process>
 
 Syslog is a good example of a process which can get a little full
-of itself under certian circumstances, and excessively hog CPU and
+of itself under certain circumstances, and excessively hog CPU and
 memory. Here we will kill off syslogd processes if it exceeds 70%
 CPU or 30% memory utilization.
 
@@ -525,7 +529,7 @@ Failed to open a read-only file handle for the runtime PID file.
 
 =item Value 6: Failed to fork
 
-An error occured while attempting to fork the child background daemon process.
+An error occurred while attempting to fork the child background daemon process.
 
 =item Value 7: Unable to open PID file handle
 
@@ -647,7 +651,7 @@ exit;
 =item check_processtable()
 
 Reads the current process table, checks and then executes any appropriate
-action to be taken. Does not accept any paramaters.
+action to be taken. Does not accept any parameters. 
 
 =cut
 
@@ -659,18 +663,6 @@ sub check_processtable {
 	print "Scanning process table\n" if $O{verbose};
 	my $t = new Proc::ProcessTable;
 	foreach my $p (@{$t->table}) {
-		## Be sad and use the process table to find out if we have a
-		## tty attached to this process
-		#if ($p->{pid} == $$ && $p->{ttynum}) {
-		#	%A = (
-		#		MOVE_TO_COL => "\033[60G",
-		#		SUCCESS => "\033[1;32m",
-		#		FAILURE => "\033[1;31m",
-		#		WARNING => "\033[1;33m",
-		#		NORMAL => "\033[0;39m"
-		#	);
-		#}
-
 		# Only grab information on processes we have rules for
 		next unless $C{process}->{'*'} || $C{process}->{$p->{fname}};
 
@@ -803,7 +795,7 @@ sub check_processtable {
 
 			# Define who to mail alerts to
 			my $mailto = ($C{process}->{$process}->{noemailonkill} || $C{process}->{$process}->{noemail}) ? '' : 
-					$C{process}->{$process}->{adminemail} || $C{notifyemail};
+					$C{process}->{$process}->{adminemail} || $C{adminemail};
 
 			# Try to slay the process
 			slay_process($process, $loglevel, $mailto, $slayref,
@@ -823,7 +815,7 @@ sub check_processtable {
 
 			# Define who to mail alerts to
 			my $mailto = ($C{process}->{$process}->{noemailonspawn} || $C{process}->{$process}->{noemail}) ? '' : 
-					$C{process}->{$process}->{adminemail} || $C{notifyemail};
+					$C{process}->{$process}->{adminemail} || $C{adminemail};
 
 			# Try to spawn the process
 			spawn_process($process, $loglevel, $mailto, $C{process}->{$process}->{spawncmd});
@@ -942,25 +934,10 @@ Displays command line help.
 
 # Command line help
 sub display_help {
-        my $rtn = shift;
-
+	my $rtn = shift;
 	require Pod::Usage;
-        Pod::Usage::pod2usage(-verbose => 2);
-
-#        print <<__end__;
-#Syntax: $SELF [--conf=filename] [--daemon] [--cron] [--user=user]
-#              [--adminemail=emailaddress] [--dryrun] [--help] [--version]
-#   --help            Display this help
-#   --version         Display full version information
-#   --dryrun          Dryrun (do not actually kill or spawn and processes)
-#   --daemon          Spawn in to background daemon
-#   --cron            Disables 'already running' errors with the --daemon option
-#   --conf=str        Specify alternative config filename
-#   --user=str        Only scan the process table for processes running as str
-#   --adminemail=str  Force all notification emails to be sent to str
-#__end__
-
-        exit($rtn) if defined $rtn;
+	Pod::Usage::pod2usage(-verbose => 2);
+	exit($rtn) if defined $rtn;
 }
 
 sub is_superuser {
@@ -994,10 +971,10 @@ sub parse_user_to_run_as {
 	if (exists $O{user}) {
 		my $name = $O{user};
 		$O{user} = scalar getpwnam($O{user}) || '';
-        	unless ($O{user}) {
-	                log LOG_CRIT, "Invalid user specified: '$name'";
-	                exit 2;
-	        }
+		unless ($O{user}) {
+			log LOG_CRIT, "Invalid user specified: '$name'";
+			exit 2;
+		}
 	} elsif (!is_superuser($EFFECTIVE_USER_ID) && !exists $O{nouser}) {
 		$O{user} = $EFFECTIVE_USER_ID;
 	}
@@ -1028,39 +1005,38 @@ sub read_config {
 
 	# Define default configuration values
 	my %default = (
-			facility		=> 'LOG_DAEMON',
-			loglevel		=> 'LOG_NOTICE',
-			notifyemail		=> 'root@localhost',
-			#notifyemailfrom		=> sprintf("\"%s\" <%s\@%s>",$SELF,(getpwuid($EFFECTIVE_USER_ID))[0],HOSTNAME),
-			notifyemailfrom		=> sprintf('%s@%s',(getpwuid($EFFECTIVE_USER_ID))[0],HOSTNAME),
-			smtphost		=> 'localhost',
-			smtptimeout		=> 20,
-			sendmailcmd		=> '/usr/sbin/sendmail -t',
-			frequency		=> 10,
-			lastsafepid		=> 100,
-			neverkillpid		=> 1,
-			neverkillprocessname	=> 'kswapd kupdated mdrecoveryd',
+			facility				=> 'LOG_DAEMON',
+			loglevel				=> 'LOG_NOTICE',
+			adminemail				=> 'root@localhost',
+			notifyemailfrom			=> sprintf('%s@%s',(getpwuid($EFFECTIVE_USER_ID))[0],HOSTNAME),
+			smtphost				=> 'localhost',
+			smtptimeout				=> 20,
+			sendmailcmd				=> '/usr/sbin/sendmail -t',
+			frequency				=> 60,
+			lastsafepid				=> 100,
+			neverkillpid			=> 1,
+			neverkillprocessname	=> 'kswapd kupdated mdrecoveryd pageout sched init',
 			protectsafepidsquietly	=> 0,
-			notifydetail		=> 'verbose',
+			notifydetail			=> 'verbose',
 		);
 
 	# Read config file
 	my $conf = new Config::General(
-			-ConfigFile		=> $config_file,
-			-LowerCaseNames		=> 1,
-			-UseApacheInclude	=> 1,
-			-IncludeRelative	=> 1,
-			-DefaultConfig		=> \%default,
+			-ConfigFile				=> $config_file,
+			-LowerCaseNames			=> 1,
+			-UseApacheInclude		=> 1,
+			-IncludeRelative		=> 1,
+			-DefaultConfig			=> \%default,
 			-MergeDuplicateBlocks	=> 1,
-			-AllowMultiOptions	=> 1,
+			-AllowMultiOptions		=> 1,
 			-MergeDuplicateOptions	=> 1,
-			-AutoTrue		=> 1,
+			-AutoTrue				=> 1,
 		);
 	print "Reading configuration file\n" if $O{verbose};
 	my %config = $conf->getall;
 
-        # Force default values for dodgy user configuration options
-        $config{frequency} = $default{frequency} unless $config{frequency} =~ /^\d+$/;
+	# Force default values for dodgy user configuration options
+	$config{frequency} = $default{frequency} unless $config{frequency} =~ /^\d+$/;
 	$config{lastsafepid} = isnumeric($config{lastsafepid}) || $default{lastsafepid};
 
 	return %config;
@@ -1155,11 +1131,11 @@ sendmail().
 
 # Report something to user and syslog
 sub alert {
-        my ($LOG_TYPE,$mailto,$subject,@ary) = @_;
+	my ($LOG_TYPE,$mailto,$subject,@ary) = @_;
 	$subject ||= 'undef alert message';
 	$subject .= ' [DRYRUN]' if exists $O{dryrun};
-        log $LOG_TYPE, $subject;
-        sendmail($C{notifyemailfrom},$mailto,$subject,@ary) if $mailto;
+	log $LOG_TYPE, $subject;
+	sendmail($C{notifyemailfrom},$mailto,$subject,@ary) if $mailto;
 }
 
 =pod
@@ -1182,10 +1158,6 @@ sub log {
 		(my $syslogmsg = "@msg") =~ s/%/%%/g;
 		Unix::Syslog::syslog $loglevel, $syslogmsg;
 	}
-	#if ($loglevel <= 2) {
-	#	warn "@msg\n";
-	#	exit(1);
-	#}
 }
 
 =pod
@@ -1200,14 +1172,14 @@ message subject and an optional detailed message body array.
 
 # Send an email
 sub sendmail {
-        my ($mail,$to,$subject,@ary) = @_;
+	my ($mail,$to,$subject,@ary) = @_;
 
 	$to = $O{adminemail} if exists $O{adminemail};
-        @ary = $subject unless @ary;
-        $subject = sprintf("[%s/%s] %s",$SELF,HOSTNAME,$subject);
-        unshift @ary,"Subject: $subject\n";
-        unshift @ary,"To: \"$to\" <$to>";
-        unshift @ary,"From: \"$mail\" <$mail>";
+	@ary = $subject unless @ary;
+	$subject = sprintf("[%s/%s] %s",$SELF,HOSTNAME,$subject);
+	unshift @ary,"Subject: $subject\n";
+	unshift @ary,"To: \"$to\" <$to>";
+	unshift @ary,"From: \"$mail\" <$mail>";
 
 
 
@@ -1234,18 +1206,18 @@ sub sendmail {
 
 
 	# Open the SMTP connection
-        my $smtp = Net::SMTP->new(
-                        $C{smtphost},
-                        Timeout	=> $C{smtptimeout},
-                        Hello	=> HOSTNAME,
-                );
+	my $smtp = Net::SMTP->new(
+						$C{smtphost},
+						Timeout	=> $C{smtptimeout},
+						Hello	=> HOSTNAME,
+					);
 
 	#  If the SMTP connection was established then send the email
 	if ($smtp) { 
-	        $smtp->mail($mail);
-	        $smtp->to($to);
-	        $smtp->data(join("\n",@ary));
-	        $smtp->dataend();
+		$smtp->mail($mail);
+		$smtp->to($to);
+		$smtp->data(join("\n",@ary));
+		$smtp->dataend();
 
 	# Otherwise try using the local sendmail binary
 	} else { 
@@ -1271,61 +1243,60 @@ instance running.
 # Daemonize self
 sub daemonize {
 	my $pidfile = shift;
-        # Check that we're not already running, and quit if we are
-        if (-f $pidfile) {
-                unless (open(PID,$pidfile)) {
+	# Check that we're not already running, and quit if we are
+	if (-f $pidfile) {
+		unless (open(PID,$pidfile)) {
 			log LOG_CRIT, "Unable to open file handle PID for file '$pidfile': $!\n";
 			exit 5;
 		}
-                my $pid = <PID>;
-                close(PID) || log LOG_WARNING, "Unable to close file handle PID for file '$pidfile': $!\n";
+		my $pid = <PID>;
+		close(PID) || log LOG_WARNING, "Unable to close file handle PID for file '$pidfile': $!\n";
 		print `ls -al /proc/$pid/stat` if DEBUG;
-                if (-f "/proc/$pid/stat") {
-                        open(FH,"/proc/$pid/stat") || log LOG_WARNING, "Unable to open file handle FH for file '/proc/$pid/stat': $!\n";
-                        my $line = <FH>;
-                        close(FH) || log LOG_WARNING, "Unable to close file handle FH for file '/proc/$pid/stat': $!\n";
-                        if ($line =~ /\d+[^(]*\((.*)\)\s*/) {
-                        #if ($line =~ /\d+\s+\((.+?)\)\s+/) {
-                                my $process = $1;
-                                if ($process =~ /^$SELF$/) {
-                                        log LOG_NOTICE, "$SELF already running at PID $pid; exiting.\n" unless exists $O{cron};
-                                        Unix::Syslog::closelog;
-                                        exit 0;
-                                }
-                        }
-                } else {
-                        log LOG_NOTICE, "Removing stale PID file.\n";
-                        unlink($pidfile);
-                }
-        }
+		if (-f "/proc/$pid/stat") {
+			open(FH,"/proc/$pid/stat") || log LOG_WARNING, "Unable to open file handle FH for file '/proc/$pid/stat': $!\n";
+			my $line = <FH>;
+			close(FH) || log LOG_WARNING, "Unable to close file handle FH for file '/proc/$pid/stat': $!\n";
+			if ($line =~ /\d+[^(]*\((.*)\)\s*/) {
+				my $process = $1;
+				if ($process =~ /^$SELF$/) {
+					log LOG_NOTICE, "$SELF already running at PID $pid; exiting.\n" unless exists $O{cron};
+					Unix::Syslog::closelog;
+					exit 0;
+				}
+			}
+		} else {
+			log LOG_NOTICE, "Removing stale PID file.\n";
+			unlink($pidfile);
+		}
+	}
 
-        # Daemon parent about to spawn
-        if (my $pid = fork) {
-                log LOG_NOTICE, "Forking background daemon, process $pid.\n";
-                Unix::Syslog::closelog;
-                exit 0;
+	# Daemon parent about to spawn
+	if (my $pid = fork) {
+		log LOG_NOTICE, "Forking background daemon, process $pid.\n";
+		Unix::Syslog::closelog;
+		exit 0;
 
-        # Child daemon process that was spawned
-        } else {
-                # Fork a second time to get rid of any attached terminals
-                if (my $pid = fork) {
-                        log LOG_NOTICE, "Forking second background daemon, process $pid.\n";
-                        Unix::Syslog::closelog;
-                        exit 0;
-                } else {
-                        unless (defined $pid) {
+	# Child daemon process that was spawned
+	} else {
+		# Fork a second time to get rid of any attached terminals
+		if (my $pid = fork) {
+			log LOG_NOTICE, "Forking second background daemon, process $pid.\n";
+			Unix::Syslog::closelog;
+			exit 0;
+		} else {
+			unless (defined $pid) {
 				log LOG_CRIT, "Cannot fork: $!\n";
 				exit 6;
 			}
-                        close(STDOUT); close(STDERR); chdir '/';
-                        unless (open(FH,">$pidfile")) {
+			close(STDOUT); close(STDERR); chdir '/';
+			unless (open(FH,">$pidfile")) {
 				log LOG_CRIT, "Unable to open file handle FH for file '$pidfile': $!\n";
 				exit 7;
 			}
-                        print FH $$;
-                        close(FH) || log LOG_WARNING, "Unable to close file handle FH for file '$pidfile': $!\n";
-                }
-        }
+			print FH $$;
+			close(FH) || log LOG_WARNING, "Unable to close file handle FH for file '$pidfile': $!\n";
+		}
+	}
 }
 
 =pod
@@ -1340,13 +1311,11 @@ Displays complete version, author and license information.
 
 # Display version information
 sub display_version {
-        my $rtn = shift;
-	if ('$Revision: 1.10 $' =~ /Revision: (\S+)/) {
-		print "$SELF $1\n";
-	}
-        print "$VERSION\n";
+	my $rtn = shift;
+	print "$SELF $VERSION\n";
+	print "$VERSION\n";
 	print "Written by Nicola Worthington, <nicolaworthington\@msn.com>.\n\n";
-	print "Copyright (C) 2002,2003,2004 Nicola Worthington.\n\n";
+	print "Copyright (C) 2002,2003,2004,2005 Nicola Worthington.\n\n";
 	print <<EOL;
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -1377,7 +1346,7 @@ Hopefully none. ;-) Send any bug reports to me at nicolaworthington@msn.com
 along with any patches and details of how to replicate the problem.
 Please only send reports for bugs which can be replicated in the
 I<latest> version of the software. The latest version can always be
-found at http://www.nicolaworthington.com
+found at http://search.cpan.org/~nicolaw/
 
 =head1 TODO
 
@@ -1387,7 +1356,15 @@ The following functionality will be added soon:
 
 =item Code cleanup
 
-The code needs to be cleaned up and made more efficient.
+The code needs to be cleaned up and made more efficient. The bulk of the
+code will be moved to a separate module, and psmon as you know it now will
+become a much smaller and simpler wrapper script.
+
+=item Apply contributed patches
+
+Users of psmon have sent me various patches for additional functionality.
+These will be incorporated in to the next major release of psmon once the
+code has been properly abstracted.
 
 =item killperprocessname directive
 
@@ -1414,7 +1391,7 @@ nsmon
 =head1 LICENSE
 
 Written by Nicola Worthington, <nicolaworthington@msn.com>.
-Copyright (C) 2002,2003,2004 Nicola Worthington.
+Copyright (C) 2002,2003,2004,2005 Nicola Worthington.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -1436,19 +1413,10 @@ Nicola Worthington <nicolaworthington@msn.com>
 
 http://www.nicolaworthington.com
 
+http://search.cpan.org/~nicolaw/
+
 =cut
 
 
 __END__
-
-#define KERN_EMERG    "<0>"  /* system is unusable               */
-#define KERN_ALERT    "<1>"  /* action must be taken immediately */
-#define KERN_CRIT     "<2>"  /* critical conditions              */
-#define KERN_ERR      "<3>"  /* error conditions                 */
-#define KERN_WARNING  "<4>"  /* warning conditions               */
-#define KERN_NOTICE   "<5>"  /* normal but significant condition */
-#define KERN_INFO     "<6>"  /* informational                    */
-#define KERN_DEBUG    "<7>"  /* debug-level messages             */
-
-
 

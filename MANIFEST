@@ -2,14 +2,13 @@ COPYING
 Changes
 Makefile.PL
 bin/psmon
+bin/psmon-config
 etc/psmon.conf
 README
 INSTALL
 MANIFEST
-install.sh
 support/commit.sh
 support/perldoc.css
 support/install.sh
 TODO
 META.yml
-install.sh

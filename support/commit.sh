@@ -1,6 +1,6 @@
 #!/bin/sh
 ############################################################
-# $Id: commit.sh,v 1.6 2004/08/01 10:44:13 nicolaw Exp $
+# $Id: commit.sh,v 1.7 2005/03/02 11:48:23 nicolaw Exp $
 # commit.sh - Update and commit changes to CVS
 # Copyright: (c)2002,2003,2004 Nicola Worthington. All rights reserved.
 ############################################################
@@ -21,14 +21,14 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 ############################################################
 
-if [ "`hostname`" = "rh73.nicolaworthington.com" ] || [ "`hostname`" = "rh73.nicolaelizabeth.com" ]
+if [ "`hostname`" = "lilacup.2x4b.com" ]
 then
 	if [ $# -ge 1 ]
 	then
 		#pod2html --css=perldoc.css ../psmon > psmon.html
 		#pod2html ../psmon > psmon.html
 		#pod2man ../psmon psmon.1
-		links -dump https://www.nicolaworthington.com/software/psmon/index.htm > README
+		#links -dump https://www.nicolaworthington.com/software/psmon/index.htm > README
 		cvs commit $@
 		cvs2cl.pl -r -t -T -P --fsf --file Changes
 		rm -f *.bak pod2htm* 

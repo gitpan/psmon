@@ -1,5 +1,5 @@
 ############################################################
-# $Id: Makefile.PL,v 1.6 2004/08/01 10:43:05 nicolaw Exp $
+# $Id: Makefile.PL,v 1.8 2005/03/02 11:48:42 nicolaw Exp $
 # psmon - Process Table Monitor Script
 # Copyright: (c)2002,2003,2004 Nicola Worthington. All rights reserved.
 ############################################################
@@ -25,17 +25,35 @@ use strict;
 use ExtUtils::MakeMaker qw(WriteMakefile);
 
 WriteMakefile(
-   NAME          => 'psmon',
-   VERSION_FROM  => 'bin/psmon',
-   AUTHOR        => 'Nicola Worthington <nicolaworthington@msn.com>',
-   ABSTRACT_FROM => 'bin/psmon',
-   EXE_FILES     => [ ('bin/psmon') ],
-   PREREQ_PM     => { 'Getopt::Long'       => 0,
-                      'Config::General'    => 0,
-                      'POSIX'              => 0,
-                      'Proc::ProcessTable' => 0,
-                      'Net::SMTP'          => 0,
-                      'Unix::Syslog'       => 0,
-                     },
+	NAME			=> 'psmon',
+	VERSION_FROM	=> 'bin/psmon',
+	AUTHOR			=> 'Nicola Worthington <nicolaworthington@msn.com>',
+	ABSTRACT_FROM	=> 'bin/psmon',
+	EXE_FILES		=> [ ('bin/psmon','bin/psmon-config') ],
+
+	dist			=> {
+				'COMPRESS'	=> 'gzip -9f',
+				'SUFFIX'	=> 'gz',
+				'ZIP'		=> '/usr/bin/zip',
+				'ZIPFLAGS'	=> '-rl',
+			},
+
+	PREREQ_PM		=> {
+				'Getopt::Long'			=> 0,
+				'Config::General'		=> 0,
+				'POSIX'					=> 0,
+				'Proc::ProcessTable'	=> 0,
+				'Net::SMTP'				=> 0,
+				'Unix::Syslog'			=> 0,
+			},
 );
+
+#sub MY::postamble {
+#	my $postamble = <<END;
+#psmon-config:
+#	\$(INST_SCRIPT)/psmon-config
+#END
+#	return $postamble;
+#}
+
 

@@ -1,6 +1,6 @@
 #!/bin/sh
 ############################################################
-# $Id: install.sh,v 1.7 2004/10/12 10:47:47 nicolaw Exp $
+# $Id: install.sh,v 1.8 2005/03/02 11:44:59 nicolaw Exp $
 # install.sh - Installation script for psmon
 # Copyright: (c)2002,2003 Nicola Worthington. All rights reserved.
 ############################################################
@@ -76,27 +76,35 @@ done
 if [ -e bin/psmon ]
 then
 	# Remove any old version of psmon
-	if which psmon > /dev/null 2>&1
-	then
-		oldpsmon=`which psmon`
-		bakpsmon=`date +"$oldpsmon-%Y%m%d%H%M%S"`
-		echo -n "Moving old psmon $oldpsmon to $bakpsmon ... "
-		mv $oldpsmon $bakpsmon
-		if [ -e $bakpsmon ]; then echo "done"; else echo "failed"; fi
-	fi
+	for file in psmon psmon-config
+	do
+		if which $file > /dev/null 2>&1
+		then
+			oldfile=`which $file`
+			bakfile=`date +"$oldfile-%Y%m%d%H%M%S"`
+			echo -n "Moving old $file $oldfile to $bakfile ... "
+			mv $oldfile $bakfile
+			if [ -e $bakfile ]; then echo "done"; else echo "failed"; fi
+		fi
 
-	# Install the new psmon script
-	echo -n "Installing psmon ... "
-	cp bin/psmon $Target/
-	if [ -e $Target/psmon ]; then echo "done"; else echo "failed"; fi
+		# Install the new psmon script
+		echo -n "Installing $file ... "
+		cp bin/$file $Target/
+		if [ -e $Target/$file ]; then
+			echo "done"
+			chmod 755 $Target/$file
+		else
+			echo "failed"
+		fi
 
-	# If we removed an old version, symlink it to the new version
-	if [ "X$oldpsmon" != "X" ] && [ "$oldpsmon" != "$Target/psmon" ]
-	then
-		echo -n "Symlinking old psmon $oldpsmon to $Target/psmon ... "
-		ln -s $Target/psmon $oldpsmon
-		if [ -e $oldpsmon ]; then echo "done"; else echo "failed"; fi
-	fi
+		# If we removed an old version, symlink it to the new version
+		if [ "X$oldfile" != "X" ] && [ "$oldfile" != "$Target/$file" ]
+		then
+			echo -n "Symlinking old $file $oldfile to $Target/$file ... "
+			ln -s $Target/$file $oldfile
+			if [ -e $oldfile ]; then echo "done"; else echo "failed"; fi
+		fi
+	done
 
 	# Install psmon.conf
 	if ! [ -e /etc/psmon.conf ]
@@ -128,16 +136,9 @@ then
 		if ! [ -d $mandir ] && [ -d /usr/share/man/man1 ];then
 			mandir=/usr/share/man/man1
 		fi
-		#if which gzip > /dev/null 2>&1
-		#then
-		#	echo -n "Installing manual psmon.1.gz ... "
-		#	pod2man psmon | gzip > $mandir/psmon.1.gz
-		#	if [ -e $mandir/psmon.1.gz ]; then echo "done"; else echo "failed"; fi
-		#else
-			echo -n "Installing manual psmon.1 ... "
-			pod2man bin/psmon > $mandir/psmon.1
-			if [ -e $mandir/psmon.1 ]; then echo "done"; else echo "failed"; fi
-		#fi
+		echo -n "Installing manual psmon.1 ... "
+		pod2man bin/psmon > $mandir/psmon.1
+		if [ -e $mandir/psmon.1 ]; then echo "done"; else echo "failed"; fi
 	else
 		echo "Could not find pod2man; skipped manual installation"
 	fi
