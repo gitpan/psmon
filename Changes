@@ -1,3 +1,162 @@
+2005-04-13 18:29  nicolaw
+
+	* bin/psmon: Abstracted syslog and email logging to a seperate OO
+	  module so that Unix::Syslog and Net::SMTP can be made optional
+	  modules in the next release instead of mandatory. Added the
+	  defaultemailmethod configuration directive.
+
+2005-03-31 15:47  nicolaw
+
+	* META.yml: Updating
+
+2005-03-02 12:35  nicolaw
+
+	* META.yml: [no log message]
+
+2005-03-02 12:34  nicolaw
+
+	* bin/psmon: Fixed some typos in the POD
+
+2005-03-02 12:34  nicolaw
+
+	* bin/psmon-config: Fixed some more defaults
+
+2005-03-02 12:15  nicolaw
+
+	* bin/psmon-config: Fixed a default value
+
+2005-03-02 12:10  nicolaw
+
+	* bin/psmon-config: Fixed a directive
+
+2005-03-02 12:08  nicolaw
+
+	* bin/psmon: Removed some old commented out code, fixed some
+	  space/tabbing and corrected some POD and a directive
+	  mismatch/error
+
+2005-03-02 11:49  nicolaw
+
+	* bin/recent/: psmon, psmon.pod: Adding
+
+2005-03-02 11:48  nicolaw
+
+	* Makefile.PL: Added psmon-config
+
+2005-03-02 11:48  nicolaw
+
+	* support/commit.sh: Changed hostname and not to update readme on
+	  the fly
+
+2005-03-02 11:47  nicolaw
+
+	* support/README.old: Moved from the old ../README
+
+2005-03-02 11:47  nicolaw
+
+	* README: Shortened
+
+2005-03-02 11:44  nicolaw
+
+	* support/install.sh: Updated to handle psmon-config
+
+2005-03-02 11:32  nicolaw
+
+	* bin/strip_pod.pl: [no log message]
+
+2005-03-02 11:22  nicolaw
+
+	* MANIFEST: Typo
+
+2005-03-02 11:20  nicolaw
+
+	* MANIFEST: Added psmon-config
+
+2005-03-02 01:27  nicolaw
+
+	* Makefile.PL: Added psmon-config
+
+2005-03-02 01:25  nicolaw
+
+	* bin/psmon-config: Adding
+
+2005-02-17 17:42  nicolaw
+
+	* bin/strip_pod.pl: Output pod to STDERR and code to STDOUT
+
+2005-02-17 17:35  nicolaw
+
+	* bin/strip_pod.pl: Adding for development aid
+
+2005-01-14 01:56  nicolaw
+
+	* support/psmon.html: Updated HTML from new POD
+
+2005-01-14 01:56  nicolaw
+
+	* bin/psmon: Typo  -  missing eol ;
+
+2004-11-11 23:08  nicolaw
+
+	* bin/psmon: Interim update migrating to cleaner OO syntax
+
+2004-10-12 13:55  nicolaw
+
+	* bin/psmon: Added better handling for figuring out where to write
+	  a valid pid file so that multiple instances can be run at once on
+	  a multiuser system.  Added better handling to figure out which
+	  config file to use, and when to only scan for the local user's
+	  processes instead of everyones
+
+2004-10-12 11:47  nicolaw
+
+	* META.yml, install.sh, support/install.sh, support/psmon.html:
+	  Fixed typo
+
+2004-08-02 04:56  nicolaw
+
+	* bin/psmon: Corrected some problems with imported symbols and
+	  module loading on some systems and versions of perl.
+
+2004-08-02 04:55  nicolaw
+
+	* META.yml: [no log message]
+
+2004-08-01 13:19  nicolaw
+
+	* bin/psmon: [no log message]
+
+2004-08-01 13:09  nicolaw
+
+	* bin/psmon: Added OSNAME and SCRIPT CATEGORIES for CPAN script
+	  archive indexing
+
+2004-08-01 11:43  nicolaw
+
+	* COPYING, Changes, INSTALL, MANIFEST, META.yml, Makefile.PL,
+	  README, TODO, install.sh, bin/psmon, etc/psmon.conf,
+	  support/commit.sh, support/install.sh, support/perldoc.css,
+	  support/psmon.html: [no log message]
+
+2004-08-01 11:31  nicolaw
+
+	* install.sh: Symlink
+
+2004-08-01 11:29  nicolaw
+
+	* COPYING, Changes, INSTALL, MANIFEST, META.yml, Makefile.PL,
+	  README, TODO, bin/psmon, etc/psmon.conf, support/commit.sh,
+	  support/install.sh, support/perldoc.css, support/psmon.html:
+	  Initial import in to new CVS repository after the old one was
+	  lost
+
+2004-08-01 11:29  nicolaw
+
+	* COPYING, Changes, INSTALL, MANIFEST, META.yml, Makefile.PL,
+	  README, TODO, bin/psmon, etc/psmon.conf, support/commit.sh,
+	  support/install.sh, support/perldoc.css, support/psmon.html:
+	  Initial revision
+
 2003-03-26 14:17  nicolaw
 
 	* psmon (1.58), psmon.html (1.4): First commit to try and get
