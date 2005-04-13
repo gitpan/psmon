@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 ############################################################
-# $Id: psmon,v 1.15 2005/04/13 17:29:39 nicolaw Exp $
+# $Id: psmon,v 1.16 2005/04/13 21:57:08 nicolaw Exp $
 # psmon - Process Table Monitor Script
 # Copyright: (c)2002,2003,2004,2005 Nicola Worthington. All rights reserved.
 ############################################################
@@ -29,7 +29,7 @@ psmon - Process Table Monitoring Script
 
 =head1 VERSION
 
-$Id: psmon,v 1.15 2005/04/13 17:29:39 nicolaw Exp $
+$Id: psmon,v 1.16 2005/04/13 21:57:08 nicolaw Exp $
 
 =head1 SYNOPSIS
 
@@ -143,6 +143,7 @@ required:
     Proc::ProcessTable
     Net::SMTP
     Unix::Syslog
+    IO::File
     File::Basename
 
 The POSIX module is usually supplied with Perl as standard, as is
@@ -177,11 +178,12 @@ use English;
 use Getopt::Long ();
 use Config::General ();
 use POSIX ();
+use IO::File ();
 use Proc::ProcessTable ();
 use File::Basename ();
 
 # Define constants
-use constant DEBUG		=> 0;  # This should be reset back to 0 for public releases
+use constant DEBUG		=> 0;
 use constant PREFIX		=> ''; # You may want to set this to /home/joeb or something
 
 # Declare global package variables
@@ -191,7 +193,7 @@ use vars qw($VERSION $SELF %OPT %C); # I want to move %OPT, and %C out of global
 $WARNING			= 1;
 $OUTPUT_AUTOFLUSH	= 1;
 ($SELF = $PROGRAM_NAME)	=~ s|^.*/||;
-$VERSION = sprintf('%d.%02d', q$Revision: 1.15 $ =~ /(\d+)/g);
+$VERSION = sprintf('%d.%02d', q$Revision: 1.16 $ =~ /(\d+)/g);
 
 # Get command line options
 %OPT = ( default_conf => PREFIX.'/etc/psmon.conf' );
@@ -689,7 +691,7 @@ sub check_processtable {
 
 	if (DEBUG) {
 		require Data::Dumper;
-		print Dumper(\%proc);
+		print Data::Dumper::Dumper(\%proc);
 	}
 
 	print "Calculating action to take\n" if $OPT{verbose};
@@ -702,7 +704,7 @@ sub check_processtable {
 		if (DEBUG) {
 			print "Checking $process ... \n";
 			require Data::Dumper;
-			print Dumper($C{process}->{$process});
+			print Data::Dumper::Dumper($C{process}->{$process});
 		}
 
 		foreach my $p (@{$proc{$process}}) {
@@ -792,7 +794,7 @@ sub check_processtable {
 
 		# See about slaying each of these process instances
 		foreach my $slayref (@{$aryref}) {
-			next if    $slayref->{pid} == $ppid
+			next if $slayref->{pid} == $ppid
 				|| $slayref->{pid} == $$
 				|| $slayref->{pid} <= 1
 				|| $C{neverkillpid} =~ /\b$slayref->{pid}\b/
@@ -848,20 +850,29 @@ sub slay_process {
 	# Protect safe processes
 	if ($slayref->{pid} <= $C{lastsafepid} && !$C{protectsafepidsquietly}) {
 		print_init_style("Saving PID $slayref->{pid} ($process) from death",'OK');
-		alert($loglevel, $mailto, "Saved safe PID $slayref->{pid} ($process) from death");
+		$msg->alert($loglevel, $mailto, "Saved safe PID $slayref->{pid} ($process) from death");
 
 	# This process is not protected
 	} else { 
 		print_init_style("Killing PID $slayref->{pid} ($process)");
 
-		my $cmdrtn = $cmd && !exists $OPT{dryrun} ? system("$cmd > /dev/null 2>&1") : 0;
+		my $tmplog = POSIX::tmpnam();
+		my $cmdrtn = $cmd && !exists $OPT{dryrun} ? system("$cmd >$tmplog 2>&1") : 0;
 		if ($cmd) { # Tried to stop with the killcmd directive 
- 			if ($cmdrtn) {
+			my ($exit_value, $signal_num, $dumped_core) = ($? >> 8, $? & 127, $? & 128);
+			if ($cmdrtn) {
 				print_init_style('FAILED');
-				alert($loglevel-1, $mailto, "Failed to execute '$cmd' to kill PID $slayref->{pid} ($process)");
+				$msg->alert($loglevel-1, $mailto,
+						"Failed to execute '$cmd' to kill PID $slayref->{pid} ($process)",
+						"Command executed: $cmd",
+						"Exit value: $exit_value",
+						"Signal number: $signal_num",
+						"Dumped core?: $dumped_core",'',
+						slurp_tmplog($tmplog),
+					);
 			} else {
 				print_init_style('OK');
-				alert($loglevel, $mailto, "Executed '$cmd' to kill PID $slayref->{pid} ($process)");
+				$msg->alert($loglevel, $mailto, "Executed '$cmd' to kill PID $slayref->{pid} ($process)");
 			}
 		}
 
@@ -870,13 +881,36 @@ sub slay_process {
 			my $killrtn = !exists $OPT{dryrun} ? kill(9,$slayref->{pid}) : 1;
 			if ($killrtn) {
 				print_init_style('KILLED');
-				alert($loglevel, $mailto, "Killed PID $slayref->{pid} ($process) because $slayref->{reason}");
+				$msg->alert($loglevel, $mailto, "Killed PID $slayref->{pid} ($process) because $slayref->{reason}");
 			} else {
 				print_init_style('FAILED');
-				alert($loglevel-1, $mailto, "Failed to kill PID $slayref->{pid} ($process)");
+				$msg->alert($loglevel-1, $mailto, "Failed to kill PID $slayref->{pid} ($process)");
 			}
 		}
 	}
+}
+
+=pod
+
+=item slurp_tmplog()
+
+Slurps up the contents of a temporary log file and returns it as a chomped
+array after unlinking the temporary log file.
+
+=cut
+
+sub slurp_tmplog {
+	my $tmplog = shift;
+	my @rtn;
+	if (open(TMPLOG,"<$tmplog")) {
+		while (<TMPLOG>) {
+			chomp;
+			push @rtn, $_;
+		}
+		close(TMPLOG);
+	}
+	unlink $tmplog;
+	return @rtn;
 }
 
 =pod
@@ -894,7 +928,7 @@ sub print_init_style {
 	foreach my $message (@_) {
 		if (length($message) <= 6) {
 			print "\033[60G\[";
-			if    (exists $OPT{dryrun})    { print "\033[1;33mDRYRUN";  }
+			if    (exists $OPT{dryrun})  { print "\033[1;33mDRYRUN";  }
 			elsif ($message eq 'OK')     { print "\033[1;32m  OK  ";  }
 			elsif ($message eq 'FAILED') { print "\033[1;31m$message"; }
 			elsif ($message eq 'KILLED' || $message eq 'DRYRUN') { print "\033[1;33m$message"; }
@@ -919,13 +953,27 @@ sub spawn_process {
 	my ($process, $loglevel, $mailto, $cmd) = @_;
 
 	print_init_style("Starting $process");
-	my $rtn = !exists $OPT{dryrun} ? system("$cmd > /dev/null 2>&1") : 0;
+	my $tmplog = POSIX::tmpnam();
+	my $rtn = !exists $OPT{dryrun} ? system("$cmd >$tmplog 2>&1") : 0;
+	my ($exit_value, $signal_num, $dumped_core) = ($? >> 8, $? & 127, $? & 128);
 	if ($rtn) {
 		print_init_style('FAILED');
-		alert($loglevel-1, $mailto, "Failed to spawn '$process' with '$cmd'");
+		$msg->alert($loglevel-1, $mailto, "Failed to spawn '$process' with '$cmd'",
+				"Command executed: $cmd",
+				"Exit value: $exit_value",
+				"Signal number: $signal_num",
+				"Dumped core?: $dumped_core",'',
+				slurp_tmplog($tmplog),
+			);
 	} else {
 		print_init_style('OK');
-		alert($loglevel, $mailto, "Spawned '$process' with '$cmd'");
+		$msg->alert($loglevel, $mailto, "Spawned '$process' with '$cmd'",
+				"Command executed: $cmd",
+				"Exit value: $exit_value",
+				"Signal number: $signal_num",
+				"Dumped core?: $dumped_core",'',
+				slurp_tmplog($tmplog),
+			);
 	}
 }
 
@@ -1023,7 +1071,6 @@ sub read_config {
 			neverkillpid			=> 1,
 			neverkillprocessname	=> 'kswapd kupdated mdrecoveryd pageout sched init',
 			protectsafepidsquietly	=> 0,
-			notifydetail			=> 'verbose',
 		);
 
 	# Read config file
@@ -1044,6 +1091,9 @@ sub read_config {
 	# Force default values for dodgy user configuration options
 	$config{frequency} = $default{frequency} unless $config{frequency} =~ /^\d+$/;
 	$config{lastsafepid} = isnumeric($config{lastsafepid}) || $default{lastsafepid};
+
+	# AdminEmail used to be (incorrectly) defined as NotifyEmail in the config file
+	$config{adminemail} = $config{notifyemail} if $config{notifyemail};
 
 	return %config;
 }
@@ -1360,8 +1410,12 @@ sub alert {
 
 	$subject ||= 'undef alert message';
 	$subject .= ' [DRYRUN]' if exists $self->{options}->{dryrun};
+
 	$self->Log($LOG_TYPE, $subject);
-	$msg->sendmail(from=>$self->{config}->{notifyemailfrom},to=>$mailto,subject=>$subject,body=>@ary) if $mailto;
+	$self->sendmail(from => $self->{config}->{notifyemailfrom},
+				to => $mailto,
+				subject => $subject,
+				body => \@ary) if $mailto;
 }
 
 =pod
@@ -1413,6 +1467,12 @@ sub sendmail {
 	unshift @body, "To: \"$param->{to}\" <$param->{to}>";
 	unshift @body, "From: \"$param->{from}\" <$param->{from}>";
 
+	if ($self->{DEBUG}) {
+		require Data::Dumper;
+		print Data::Dumper::Dumper($param);
+		print Data::Dumper::Dumper(\@body);
+	}
+
 	# Use sendmail by default with failover to SMTP
 	if (exists $self->{config}->{defaultemailmethod} && $self->{config}->{defaultemailmethod} !~ /smtp/i) {
 		unless ($self->_sendmail_sendmail($param,@body)) {
@@ -1432,7 +1492,7 @@ sub sendmail {
 sub _sendmail_sendmail {
 	my ($self,$param,@body) = @_;
 	if (open(PH,"|$self->{config}->{sendmailcmd}")) {
-		print PH $_ for @body;
+		print PH "$_\n" for @body;
 		if (close(PH)) {
 			return 1;
 		} else {
