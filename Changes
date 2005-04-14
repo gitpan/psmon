@@ -1,3 +1,33 @@
+2005-04-14 16:43  nicolaw
+
+	* bin/psmon: Re-ordered some POD
+
+2005-04-14 16:37  nicolaw
+
+	* bin/psmon: Fixed daemonise() so that it will work on non-Linux
+	  platforms.  Fixed LOG_PERROR being used on platforms which do not
+	  support it.  Fixed use of /usr/sbin/sendmail to check for
+	  existance of /lib/sendmail also.  Added some more recent
+	  performance values in the POD.
+
+2005-04-13 22:57  nicolaw
+
+	* etc/psmon.conf: Fixed bug with legacy config option NotifyEmail
+	  not getting translated to AdminEmail option, and calling of
+	  alert() method.
+
+2005-04-13 22:57  nicolaw
+
+	* bin/psmon: Fixed bug with legacy config option NotifyEmail not
+	  getting translated to AdminEmail option, and calling of alert()
+	  method.  Removed depreciated dump of various /proc information in
+	  alert emails in favor of spawn and kill command stdout and stderr
+	  and exit values etc.
+
+2005-04-13 18:32  nicolaw
+
+	* Changes: Commited new log items from CVS
+
 2005-04-13 18:29  nicolaw
 
 	* bin/psmon: Abstracted syslog and email logging to a seperate OO

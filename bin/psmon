@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
+
 ############################################################
-# $Id: psmon,v 1.16 2005/04/13 21:57:08 nicolaw Exp $
+# $Id: psmon,v 1.18 2005/04/14 15:43:20 nicolaw Exp $
 # psmon - Process Table Monitor Script
 # Copyright: (c)2002,2003,2004,2005 Nicola Worthington. All rights reserved.
 ############################################################
@@ -29,7 +30,7 @@ psmon - Process Table Monitoring Script
 
 =head1 VERSION
 
-$Id: psmon,v 1.16 2005/04/13 21:57:08 nicolaw Exp $
+$Id: psmon,v 1.18 2005/04/14 15:43:20 nicolaw Exp $
 
 =head1 SYNOPSIS
 
@@ -193,7 +194,7 @@ use vars qw($VERSION $SELF %OPT %C); # I want to move %OPT, and %C out of global
 $WARNING			= 1;
 $OUTPUT_AUTOFLUSH	= 1;
 ($SELF = $PROGRAM_NAME)	=~ s|^.*/||;
-$VERSION = sprintf('%d.%02d', q$Revision: 1.16 $ =~ /(\d+)/g);
+$VERSION = sprintf('%d.%02d', q$Revision: 1.18 $ =~ /(\d+)/g);
 
 # Get command line options
 %OPT = ( default_conf => PREFIX.'/etc/psmon.conf' );
@@ -331,7 +332,7 @@ Defaults to 20 seconds.
 
 Defines the sendmail command to use to send notification emails if there
 is a failure with the SMTP connection to the host defined by I<smtphost>.
-Defaults to '/usr/sbin/sendmail -t'.
+Defaults to '/lib/sendmail -t' or '/usr/sbin/sendmail -t'.
 
 =item DefaultEmailMethod
 
@@ -344,12 +345,6 @@ Forces this psmon to as if the --dryrun command line switch had specified.
 This is useful if you want to force a specific configuration file to only
 report and never actually take any automated action.
 
-=item NotifyDetail
-
-Defines the verbosity of notification emails which are sent. Can be set
-to 'Simple', 'Verbose' or 'Debug'. Defaults to 'Verbose'. This directive
-is depreciated.
-
 =item NeverKillPID
 
 Accepts a space delimited list of PIDs which will never be killed.
@@ -358,7 +353,7 @@ Defaults to 1.
 =item NeverKillProcessName
 
 Accepts a space delimited list of process names which will never be
-killed. Defaults to 'kswapd kupdated mdrecoveryd pageout sched init'.
+killed. Defaults to 'devfsadmd kswapd kupdated mdrecoveryd pageout sched init fsflush'.
 
 =back
 
@@ -542,12 +537,6 @@ An error occurred while attempting to fork the child background daemon process.
 
 Failed to open a write file handle for the runtime PID file.
 
-=item Value 8: Failure to load Perl module
-
-One or more Perl module could not be loaded. This usually happens when one of the
-required Perl modules which psmon depends upon is not installed or could not be located
-in the Perl LIB search path.
-
 =back
 
 =head1 PERFORMANCE
@@ -556,6 +545,8 @@ psmon is not especially fast. Much of it's time is spent reading the process tab
 If the process table is particularly large this can take a number of seconds.
 Although is rarely a major problem on todays speedy machines, I have run a few tests
 so you take look at the times and decide if you can afford the wait.
+
+Approximate figures from release 1.0.3:
 
  CPU             OS              Open Files/Procs    1m Load    Real Time
  PIII 1.1G       Mandrake 9.0         10148 / 267       0.01     0m0.430s
@@ -567,11 +558,15 @@ so you take look at the times and decide if you can afford the wait.
  PIII 866        Red Hat 8.0           3769 /  76       0.63     0m1.662s
  PIII 750        Red Hat 6.2            754 /  35       3.50     0m2.170s
 
-(Figures are accurate as of release 1.0.3).
-
 These production machines were running the latest patched stock distribution kernels.
 I have listed the total number of open file descriptors, processes running and 1 minute
 load average to give you a slightly better context of the performance.
+
+Approximate figures from release 1.17:
+
+ CPU                      OS                1m Load    CPU Time
+ UltraSPARC-IIe 500Mhz    SunOS 5.9            0.10    0m0.550s
+ Athlon XP 2400+ 2Ghz     RHEL 3.0             1.00    0m0.150s 
 
 =cut
 
@@ -1064,12 +1059,12 @@ sub read_config {
 			notifyemailfrom			=> sprintf('%s@%s',(getpwuid($EFFECTIVE_USER_ID))[0],(POSIX::uname())[1]),
 			smtphost				=> 'localhost',
 			smtptimeout				=> 20,
-			sendmailcmd				=> '/usr/sbin/sendmail -t',
+			sendmailcmd				=> (-e '/lib/sendmail' ? '/lib/sendmail -t' : '/usr/sbin/sendmail -t'),
 			defaultemailmethod		=> 'sendmail',
 			frequency				=> 60,
 			lastsafepid				=> 100,
 			neverkillpid			=> 1,
-			neverkillprocessname	=> 'kswapd kupdated mdrecoveryd pageout sched init',
+			neverkillprocessname	=> 'devfsadmd kswapd kupdated mdrecoveryd pageout sched init fsflush',
 			protectsafepidsquietly	=> 0,
 		);
 
@@ -1140,6 +1135,8 @@ sub daemonize {
 		}
 		my $pid = <PID>;
 		close(PID) || $msg->Log('LOG_WARNING', "Unable to close file handle PID for file '$pidfile': $!\n");
+
+		# This is a good method to check the process is still running (Linux only)
 		print `ls -al /proc/$pid/stat` if DEBUG;
 		if (-f "/proc/$pid/stat") {
 			open(FH,"/proc/$pid/stat") || $msg->Log('LOG_WARNING', "Unable to open file handle FH for file '/proc/$pid/stat': $!\n");
@@ -1153,6 +1150,14 @@ sub daemonize {
 					exit 0;
 				}
 			}
+
+		# This will work on other UNIX flavors
+		} elsif (kill(0,$pid)) {
+			$msg->Log('LOG_NOTICE', "$SELF already running at PID $pid; exiting.\n") unless exists $OPT{cron};
+			$msg->closelog();
+			exit 0;
+
+		# Otherwise the PID file is old and stale
 		} else {
 			$msg->Log('LOG_NOTICE', "Removing stale PID file.\n");
 			unlink($pidfile);
@@ -1193,6 +1198,38 @@ sub daemonize {
 =item display_version()
 
 Displays complete version, author and license information.
+
+=back
+
+=head2 PSMon::Logging METHODS
+
+=over 4
+
+=item loglevel()
+
+Accepts a syslog loglevel keyword and returns the associated constant integer.
+
+=item logfacility()
+
+Accepts a syslog facility keyword and returns the associated constant integer.
+
+=item alert()
+
+Logs a message to syslog using Log() and sends a notification email using
+sendmail().
+
+=item Log()
+
+Logs messages to DAEMON facility in syslog. Accepts a log
+level and message array. Will terminate the process if it is
+asked to log a message of a log level 2 or less (LOG_EMERG,
+LOG_ALERT, LOG_CRIT).
+
+=item sendmail()
+
+Sends email notifications of syslog messages, called by alert().
+Accepts sending email address, recipient email address, short
+message subject and an optional detailed message body array.
 
 =back
 
@@ -1320,6 +1357,7 @@ use strict;
 use warnings;
 
 use Carp qw(croak carp confess);
+use English;
 use POSIX ();
 use Net::SMTP ();
 use Unix::Syslog ();
@@ -1335,10 +1373,17 @@ sub new {
 
 	# Open default syslog facility with TTY output
 	print "Opening default syslog facility\n" if exists $self->{options}->{verbose};
-	Unix::Syslog::openlog($self->{SELF},
-				Unix::Syslog::LOG_PID | Unix::Syslog::LOG_PERROR,
-				$self->logfacility()
-			);
+	{
+		# LOG_PERROR isn't defined on all systems
+		no strict;
+		my $options = Unix::Syslog::LOG_PID;
+		if (Unix::Syslog::LOG_PERROR =~ /^\d+$/) {
+			$options = Unix::Syslog::LOG_PID | Unix::Syslog::LOG_PERROR;
+		} else {
+			$self->{EMULATE_PERROR} = 1;
+		}
+		Unix::Syslog::openlog($self->{SELF}, $options, $self->logfacility());
+	}
 
 	return $self;
 }
@@ -1346,25 +1391,19 @@ sub new {
 sub closelog {
 	my $self = shift;
 	Unix::Syslog::closelog();
+	delete $self->{EMULATE_PERROR};
 }
 
 sub openlog {
 	my $self = shift;
 	my $facility = $self->logfacility(shift);
 
+	delete $self->{EMULATE_PERROR};
 	Unix::Syslog::openlog($self->{SELF},
 				Unix::Syslog::LOG_PID,
 				$facility
 			);
 }
-
-=pod
-
-=item loglevel()
-
-Accepts a syslog loglevel keyword and returns the associated constant integer.
-
-=cut
 
 sub loglevel {
 	my $self = shift;
@@ -1376,14 +1415,6 @@ sub loglevel {
 	}
 }
 
-=pod
-
-=item logfacility()
-
-Accepts a syslog facility keyword and returns the associated constant integer.
-
-=cut
-
 sub logfacility {
 	my $self = shift;
 	local $_ = shift || '';
@@ -1393,15 +1424,6 @@ sub logfacility {
 		return exists &{"Unix::Syslog::$_"} ? &{"Unix::Syslog::$_"} : Unix::Syslog::LOG_DAEMON;
 	}
 }
-
-=pod
-
-=item alert()
-
-Logs a message to syslog using Log() and sends a notification email using
-sendmail().
-
-=cut
 
 # Report something to user and syslog
 sub alert {
@@ -1418,17 +1440,6 @@ sub alert {
 				body => \@ary) if $mailto;
 }
 
-=pod
-
-=item Log()
-
-Logs messages to DAEMON facility in syslog. Accepts a log
-level and message array. Will terminate the process if it is
-asked to log a message of a log level 2 or less (LOG_EMERG,
-LOG_ALERT, LOG_CRIT).
-
-=cut
-
 sub Log {
 	my $self = shift;
 	my ($loglevel,@msg) = @_;
@@ -1438,19 +1449,11 @@ sub Log {
 	unshift @msg,'Process exiting!' if $loglevel <= 2;
 	{ # Unix::Syslog gets unhappy for it's sprintf stuff otherwise :)
 		(my $syslogmsg = "@msg") =~ s/%/%%/g;
-		Unix::Syslog::syslog $loglevel, $syslogmsg;
+		Unix::Syslog::syslog($loglevel, $syslogmsg);
+		chomp $syslogmsg;
+		print "$syslogmsg\n" if $self->{EMULATE_PERROR};
 	}
 }
-
-=pod
-
-=item sendmail()
-
-Sends email notifications of syslog messages, called by alert().
-Accepts sending email address, recipient email address, short
-message subject and an optional detailed message body array.
-
-=cut
 
 # Send an email
 sub sendmail {
