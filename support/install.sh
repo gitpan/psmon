@@ -1,6 +1,6 @@
 #!/bin/sh
 ############################################################
-# $Id: install.sh,v 1.8 2005/03/02 11:44:59 nicolaw Exp $
+# $Id: install.sh,v 1.9 2005/05/06 14:11:06 nicolaw Exp $
 # install.sh - Installation script for psmon
 # Copyright: (c)2002,2003 Nicola Worthington. All rights reserved.
 ############################################################
@@ -23,7 +23,7 @@
 
 Target="/usr/bin"
 
-if ! [ -f support/commit.sh ] && [ -f commit.sh ] && [ -f ../Makefile.PL ]
+if ! [ -f support/psmon.html ] && [ -f psmon.html ] && [ -f ../Makefile.PL ]
 then
 	cd ..
 fi
